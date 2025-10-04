@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Signals</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./allsignals.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="./lightweight-charts.js"></script>
+    <script src="./ta-lib.js"></script>
+    <script src="./toggle.js"></script>
+    <script src="./sandr.js"></script>
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <header class="nav-container">
+    <nav class="navbar">
+        <a href="./index.html" class="nav-link">Home</a>
+        <a href="./allsignals.html" class="nav-link">All Signals</a>
+    </nav>
+    <div class="theme-toggle-container">
+        <button id="theme-toggle-btn" aria-label="Toggle theme">
+            <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="5"></circle>
+                <path d="M12 1v2m0 18v2m-8.66-8.66l1.42-1.42m12.73 12.73l-1.42-1.42m-12.73 0l-1.42 1.42m12.73-12.73l1.42 1.42M3 12H1m22 0h-2"></path>
+            </svg>
+            <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+    </div>
+</header>
+        
+        <h1 id="page-title">All Signals</h1>
+        <div class="input-container">
+            <div class="input-group">
+                <label for="input-exchange">Exchange</label>
+                <select id="input-exchange">
+                    <option value="binance">Binance</option>
+                    <option value="mexc">MEXC</option>
+                    <option value="bitget">Bitget</option>
+                    <option value="bitmart">Bitmart</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="input-granularity">Timeframe</label>
+                <select id="input-granularity"></select>
+                <div id="granularity-buttons" class="granularity-buttons" data-expanded="false"></div>
+                <button id="more-timeframes" class="more-timeframes-btn">More</button>
+                <button id="collapse-timeframes" class="collapse-timeframes-btn">Collapse</button>
+            </div>
+
+            <div class="input-group">
+                <label for="input-symbol">Symbol</label>
+                <select id="input-symbol">
+                    <option value="" disabled selected>Select Pair</option>
+                </select>
+            </div>
+
+            <div class="symbol-search-container">
+                <label for="symbol-search">Search Symbol</label>
+                <div class="search-input-wrapper">
+                    <input id="symbol-search" type="search" placeholder="Search symbols (e.g., BTC/USDT)" value="">
+                    <button id="collapse-results" class="collapse-results-btn" title="Collapse results">✕</button>
+                </div>
+                <ul id="symbol-results-list" class="symbol-results-list"></ul>
+            </div>
+
+            <div class="input-group">
+                <label for="use-smc-only">Use SMC Only</label>
+                <input type="checkbox" id="use-smc-only">
+            </div>
+            
+            <div class="input-container">
+                <label for="realtime-delay">Real-time Update Delay (seconds)</label>
+                <input type="number" id="realtime-delay" min="5" step="1" value="30">
+            </div>
+    
+            <div class="input-group">
+                <label for="real-time-updates">Real-Time Updates</label>
+                <input type="checkbox" id="real-time-updates">
+            </div>
+
+            <div class="input-group">
+                <label>With Latest Candle:
+                    <div class="tooltip">
+                        <span style="cursor: help; text-decoration: underline;">[?]</span>
+                        <span class="tooltiptext">Check to include the latest incomplete candle in signal generation.</span>
+                    </div>
+                    <input id="with-latest-candle" type="checkbox">
+                </label>
+            </div>
+
+            <div class="input-group">
+                <label for="with-htf-checkbox">Include HTF Signals</label>
+                <input type="checkbox" id="with-htf-checkbox">
+            </div>
+
+            <div class="input-group">
+                <label>Only-Recent Levels: 
+    <div class="tooltip">
+        <span style="cursor: help; text-decoration: underline;">[?]</span>
+        <span class="tooltiptext">Check to prioritize the most recent support/resistance level (single candle reversal and upto 10 candles lookback period).</span>
+    </div>
+    <input type="checkbox" id="only-recent-checkbox" />
+</label>
+                <label>Only-Strong Levels: 
+    <div class="tooltip">
+        <span style="cursor: help; text-decoration: underline;">[?]</span>
+        <span class="tooltiptext">Check to prioritize stronger trend-based support/resistance levels (up to 4 candles before reversal candle).</span>
+    </div>
+    <input type="checkbox" id="only-strong-checkbox" />
+</label>
+            </div>
+
+            <div class="input-group">
+                <label><input type="checkbox" id="stop-other-fetches"> Stop other fetches</label>
+            </div>
+
+            <div class="input-group">
+                <label for="input-fetch-count">Number of fetches (0 = all)</label>
+                <input id="input-fetch-count" type="number" min="0" placeholder="e.g., 10">
+                <label style="display:block;margin-top:6px;"><input type="checkbox" id="randomize-fetch"> Randomize symbols selection</label>
+            </div>
+
+            <div class="input-group">
+                <label for="input-specific-symbols">Specific symbols (comma separated)</label>
+                <textarea id="input-specific-symbols" placeholder="e.g., BTC/USDT,ETH/USDT" rows="2" style="width:100%;border-radius:8px;padding:8px;background:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);"></textarea>
+                <small style="display:block;margin-top:6px;color:var(--text-color);opacity:0.8;">Click symbols in the search results to add/remove them to the specific list. Double-click a symbol to fetch it immediately.</small>
+            </div>
+
+            <div class="input-group">
+                <label for="filter-base-token">Filter - Base Token (exact)</label>
+                <input id="filter-base-token" type="text" placeholder="e.g., BTC">
+            </div>
+
+            <div class="input-group">
+                <label for="filter-quote-token">Filter - Quote Token (exact)</label>
+                <input id="filter-quote-token" type="text" placeholder="e.g., USDT">
+            </div>
+
+            <div class="input-group">
+                <label for="filter-startswith">Filter - Symbol Prefix</label>
+                <input id="filter-startswith" type="text" placeholder="e.g., BTC">
+            </div>
+
+            <div class="input-group">
+                <label for="filter-signal-category">Filter - Category</label>
+                <select id="filter-signal-category">
+                    <option value="All">All</option>
+                    <option value="Buy">Buy</option>
+                    <option value="Sell">Sell</option>
+                    <option value="Neutral">Neutral</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="filter-exact-signal">Filter - Exact Signal</label>
+                <select id="filter-exact-signal">
+                    <option value="Any">Any</option>
+                    <option>Strong Buy</option>
+                    <option>Moderate Buy</option>
+                    <option>Weak Buy</option>
+                    <option>Very Weak Buy</option>
+                    <option>Neutral</option>
+                    <option>Very Weak Sell</option>
+                    <option>Weak Sell</option>
+                    <option>Moderate Sell</option>
+                    <option>Strong Sell</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="min-confidence">Min Confidence (%)</label>
+                <input id="min-confidence" type="number" min="0" max="300" placeholder="e.g., 50">
+            </div>
+
+            <div id="single-signal-table-container" style="display: none;">
+            <h3>Selected Symbol Signal</h3>
+            <table id="single-signal-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Timeframe</th>
+                        <th>Exchange</th>
+                        <th>Symbol</th>
+                        <th>Signal</th>
+                        <th>Confidence (%)</th>
+                        <th>Current Price</th>
+                        <th>Entry Price</th>
+                        <th>Take Profit</th>
+                        <th>Stop Loss</th>
+                        <th>Potential Entry</th>
+                        <th>Risk/Reward</th>
+                        <th>HTF Signal</th>
+                        <th>HTF Confidence (%)</th>
+                        <th>HTF Current Price</th>
+                        <th>HTF Entry Price</th>
+                        <th>HTF Take Profit</th>
+                        <th>HTF Stop Loss</th>
+                        <th>HTF Potential Entry</th>
+                        <th>HTF Risk/Reward</th>
+                    </tr>
+                </thead>
+                <tbody id="single-signal-body"></tbody>
+            </table>
+        </div>
+
+            <div id="signals-table-container" style="display: none;">
+            <h3>All Symbols Signals</h3>
+            <table id="signals-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Timeframe</th>
+                        <th>Exchange</th>
+                        <th>Symbol</th>
+                        <th>Signal</th>
+                        <th>Confidence (%)</th>
+                        <th>Current Price</th>
+                        <th>Entry Price</th>
+                        <th>Take Profit</th>
+                        <th>Stop Loss</th>
+                        <th>Potential Entry</th>
+                        <th>Risk/Reward</th>
+                        <th>HTF Signal</th>
+                        <th>HTF Confidence (%)</th>
+                        <th>HTF Current Price</th>
+                        <th>HTF Entry Price</th>
+                        <th>HTF Take Profit</th>
+                        <th>HTF Stop Loss</th>
+                        <th>HTF Potential Entry</th>
+                        <th>HTF Risk/Reward</th>
+                    </tr>
+                </thead>
+                <tbody id="signals-body"></tbody>
+            </table>
+        </div>
+        <div class="success-container">
+            <p id="success">Initializing...</p>
+        </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <button id="fetch-signals" class="action-btn">Get Signals</button>
+                <button id="stop-all-fetching" class="action-btn" style="background:linear-gradient(45deg,#ef4444,#f97316);">Stop All</button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <button id="clear-signals-table" class="action-btn" style="background:linear-gradient(45deg,#64748b,#0ea5a6);">Clear All Table</button>
+                <button id="clear-single-table" class="action-btn" style="background:linear-gradient(45deg,#64748b,#7c3aed);">Clear Selected Table</button>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="./allsignals.js"></script>
+</body>
+</html>
